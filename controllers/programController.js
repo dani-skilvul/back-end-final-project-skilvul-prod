@@ -1,22 +1,21 @@
-const News = require("../models").News;
-const { nanoid } = require("nanoid");
-const uploadImageToImgBB = require("../utils/uploadImageToImgBB");
-const dayjs = require("dayjs");
-require("dayjs/locale/id");
+const Program = require('../models').Program;
+const { nanoid } = require('nanoid');
+const uploadImageToImgBB = require('../utils/uploadImageToImgBB');
+const dayjs = require('dayjs');
+require('dayjs/locale/id');
 
-const addNewsController = async (req, res) => {
+const addProgramController = async (req, res) => {
   try {
     // mengambil data
-    const id = "news-" + nanoid(4);
-    const { judul, isi } = req.body;
-    const waktu = dayjs().locale("id").format("DD-MMMM-YYYY HH:mm:ss");
+    const id = 'program-' + nanoid(4);
+    const { judul, isi, waktu, link } = req.body;
     const imageBuffer = req.file ? req.file.buffer : null;
 
     // validasi: jika user tidak mengirimkan data news lengkap
-    if (!judul || !isi) {
+    if (!judul || !isi || !waktu || !link) {
       return res.status(400).json({
-        status: "error",
-        message: "Semua data judul dan isi harus diisi",
+        status: 'error',
+        message: 'Semua data judul, isi, waktu dan link harus diisi',
       });
     }
 
@@ -27,22 +26,23 @@ const addNewsController = async (req, res) => {
       imageUrl = await uploadImageToImgBB(imageBuffer, req.file.originalname);
     }
 
-    // buat object news
-    const news = {
+    // buat object program
+    const program = {
       id,
       judul,
       isi,
       gambar: imageUrl,
       waktu,
+      link,
     };
 
     // proses insert data
-    await News.create(news);
+    await Program.create(program);
 
     // berikan response success
     return res.status(201).json({
-      status: "success",
-      message: "News berhasil dibuat",
+      status: 'success',
+      message: 'Program berhasil dibuat',
       data: {
         id,
       },
@@ -50,91 +50,93 @@ const addNewsController = async (req, res) => {
   } catch (error) {
     // berikan response error
     return res.status(500).json({
-      status: "error",
+      status: 'error',
       message: error.message,
     });
   }
 };
 
-const getNewsController = async (req, res) => {
+const getProgramController = async (req, res) => {
   try {
     // proses ambil semua data
-    const news = await News.findAll();
+    const program = await Program.findAll();
 
     // berikan response success
     return res.json({
-      status: "success",
-      message: "Berhasil mengambil semua news",
+      status: 'success',
+      message: 'Berhasil mengambil semua program',
       data: {
-        news,
+        program,
       },
     });
   } catch (error) {
     // berikan response error
     return res.status(500).json({
-      status: "error",
+      status: 'error',
       message: error.message,
     });
   }
 };
 
-const getNewsByIdController = async (req, res) => {
+const getProgramByIdController = async (req, res) => {
   try {
     // mengambil id dari req.params.id
     const id = req.params.id;
 
     // proses mengambil satu data
-    const news = await News.findOne({
+    const program = await Program.findOne({
       where: {
         id,
       },
     });
 
     // validasi jika data yang dicari tidak ada
-    if (!news) {
+    if (!program) {
       // berikan response error
       return res.status(404).json({
-        status: "error",
-        message: "News tidak ditemukan",
+        status: 'error',
+        message: 'Program tidak ditemukan',
       });
     }
 
     // berikan response success
     return res.json({
-      status: "success",
-      message: "Berhasil mengambil satu news",
+      status: 'success',
+      message: 'Berhasil mengambil satu program',
       data: {
-        news,
+        program,
       },
     });
   } catch (error) {
     // berikan response error
     return res.status(500).json({
-      status: "error",
+      status: 'error',
       message: error.message,
     });
   }
 };
 
-const editNewsByIdController = async (req, res) => {
+const editProgramByIdController = async (req, res) => {
   try {
     // mengambil data dari user
     const id = req.params.id;
     const judul = req.body.judul;
     const isi = req.body.isi;
+    const waktu = req.body.waktu;
+    const link = req.body.link;
     const imageBuffer = req.file ? req.file.buffer : null;
 
     // cek data di db berdasarkan id
-    const news = await News.findOne({
+    const program = await Program.findOne({
       where: {
         id,
       },
     });
     // validasi: berikan response error, ketika data yang dicari tidak ada
-    if (!news) {
+    if (!program) {
       return res.status(404).json({
-        status: "error",
-        message: "News tidak ditemukan",
+        status: 'error',
+        message: 'Program tidak ditemukan',
       });
     }
 
@@ -145,15 +147,17 @@ const editNewsByIdController = async (req, res) => {
       imageUrl = await uploadImageToImgBB(imageBuffer, req.file.originalname);
     }
 
-    // buat object news baru
-    let newNews = {
-      judul: judul ? judul : news.judul,
-      isi: isi ? isi : news.isi,
-      gambar: imageUrl ? imageUrl : news.gambar,
+    // buat object program baru
+    let newProgram = {
+      judul: judul ? judul : program.judul,
+      isi: isi ? isi : program.isi,
+      gambar: imageUrl ? imageUrl : program.gambar,
+      waktu: waktu ? waktu : program.waktu,
+      link: link ? link : program.link,
     };
 
     // proses update
-    await News.update(newNews, {
+    await Program.update(newProgram, {
       where: {
         id,
       },
@@ -161,39 +165,39 @@ const editNewsByIdController = async (req, res) => {
 
     // berikan response success
     return res.json({
-      status: "success",
-      message: "News berhasil dirubah",
+      status: 'success',
+      message: 'Program berhasil dirubah',
     });
   } catch (error) {
     // berikan response error
     return res.status(500).json({
-      status: "error",
+      status: 'error',
       message: error.message,
     });
   }
 };
 
-const deleteNewsByIdController = async (req, res) => {
+const deleteProgramByIdController = async (req, res) => {
   try {
     // ambil id dari req.params.id
     const id = req.params.id;
 
-    // validasi: cari data news berdasarkan id
-    const news = await News.findOne({
+    // validasi: cari data berdasarkan id
+    const program = await Program.findOne({
       where: {
         id,
       },
     });
-    if (!news) {
+    if (!program) {
       // berikan response error
       return res.status(404).json({
-        status: "error",
-        message: "News tidak ditemukan",
+        status: 'error',
+        message: 'Program tidak ditemukan',
       });
     }
 
     // proses hapus
-    await News.destroy({
+    await Program.destroy({
       where: {
         id,
       },
@@ -201,22 +205,22 @@ const deleteNewsByIdController = async (req, res) => {
 
     // berikan response success
     return res.json({
-      status: "success",
-      message: "News berhasil dihapus",
+      status: 'success',
+      message: 'Program berhasil dihapus',
     });
   } catch (error) {
     // berikan response error
     return res.status(500).json({
-      status: "error",
+      status: 'error',
       message: error.message,
     });
   }
 };
 
 module.exports = {
-  addNewsController,
-  getNewsController,
-  getNewsByIdController,
-  editNewsByIdController,
-  deleteNewsByIdController,
+  addProgramController,
+  getProgramController,
+  getProgramByIdController,
+  editProgramByIdController,
+  deleteProgramByIdController,
 };
